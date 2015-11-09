@@ -34,13 +34,9 @@ class Socklib
 		void connectScan(int startP, int EndP)
 		{
 			int s;
-			// -------- Connect Scann -------- //
 			for (int i = startP; i <= EndP; i++)
 			{
-				// ----------- Socket Creation ------------ //
 				s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-
-				// ------------- Connecting ------------ //
 				int result = connect(s, (struct sockaddr *)&server, sizeof(server));
 					if (result == 0)
 					{
@@ -71,9 +67,8 @@ int main(int argc, char *argv[])
 	std::cin >> startP;
 	std::cout << " End: ";
 	std::cin >> EndP;
-	
-	sLib.connectScan(startP,EndP);
 
-	std::cin.get();
+     
+	sLib.connectScan(startP,EndP);
 	return 0;
 }
