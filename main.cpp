@@ -132,6 +132,7 @@ int main(int argc, char *argv[])
 			std::cout << "UDP::Port is closed :: " << startP << std::endl;		
 		}
 	}
-     }else return std::cerr << "USAGE: <hostname> -T for TcpScan  -U for UdpScan" << std::endl;
+    else std::cerr << "USAGE: <hostname> -T for TcpScan  -U for UdpScan" << std::endl;
+	}
 return 0;
 }
