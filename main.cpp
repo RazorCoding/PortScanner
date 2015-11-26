@@ -7,6 +7,8 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <cstring>
+#include <thread>
+#include <vector>
 class Socklib
 {
 	public:
@@ -65,6 +67,17 @@ class Socklib
 	
 }; // end of class
 
+void threaded_scan(Socklib& sLib, bool (Socklib::*fcn)(int), const std::string& label, int startP, int endP)
+{
+	for(;startP<=endP;startP++)
+	{
+		if ((sLib.*fcn)(startP))
+			std::cout << label << " is open :: " << startP << std::endl;
+		else
+			std::cout << label << " is closed :: " << startP << std::endl;
+	}
+}
+
 int main(int argc, char *argv[])
 {
 	if(argc > 1)
@@ -84,19 +97,17 @@ int main(int argc, char *argv[])
 		 std::cin >> startP; 
 		 std::cout << ":";
 		 std::cin >> endP;
-   		
-		 for(;startP<=endP;startP++)
-		 {
-			if(sLib.TcpScan(startP))
-		 	std::cout << "TCP::Port is open :: " << startP << std::endl;
-		 	else
-		 	std::cout << "TCP::Port is closed :: " << startP << std::endl;
-		 	
-		 	if(sLib.UdpScan(startP))
-		 	std::cout << "UDP::Port is open :: " <<  startP << std::endl;
-		 	else
-		  	std::cout << "UDP::Port closed :: " << startP <<  std::endl;
-		 }
+
+		 int num_ports_per_thread = (endP - startP) / std::thread::hardware_concurrency();
+		 std::vector<std::thread> threads;
+		 for (unsigned i = 0, n = std::thread::hardware_concurrency(); i < n; i++)
+			 threads.push_back(std::thread(&threaded_scan, std::ref(sLib), &Socklib::TcpScan, "TCP::Port", i * num_ports_per_thread, (i + 1) * num_ports_per_thread - 1));
+
+		 // TODO: UDP scan
+
+		 // Wait for each thread to finish
+		 for (auto& t : threads)
+			 t.join();
 	}
 	else if(argv[2])
 	{
@@ -107,13 +118,14 @@ int main(int argc, char *argv[])
 		std::cout << ":";
 		std::cin >> endP;
 		
-		for(;startP<=endP;startP++)
-		{
-			if(sLib.TcpScan(startP))
-			std::cout << "TCP::Port is open :: " << startP << std::endl;
-			else
-			std::cout << "TCP::Port is closed :: " << startP << std::endl;		
-		}
+		 int num_ports_per_thread = (endP - startP) / std::thread::hardware_concurrency();
+		 std::vector<std::thread> threads;
+		 for (unsigned i = 0, n = std::thread::hardware_concurrency(); i < n; i++)
+			 threads.push_back(std::thread(&threaded_scan, std::ref(sLib), &Socklib::TcpScan, "TCP::Port", i * num_ports_per_thread, (i + 1) * num_ports_per_thread - 1));
+
+		 // Wait for each thread to finish
+		 for (auto& t : threads)
+			 t.join();
 	}
 	else if(argv[3])
 	{
@@ -132,6 +144,7 @@ int main(int argc, char *argv[])
 			std::cout << "UDP::Port is closed :: " << startP << std::endl;		
 		}
 	}
-     }else return std::cerr << "USAGE: <hostname> -T for TcpScan  -U for UdpScan" << std::endl;
+    else std::cerr << "USAGE: <hostname> -T for TcpScan  -U for UdpScan" << std::endl;
+	}
 return 0;
 }
